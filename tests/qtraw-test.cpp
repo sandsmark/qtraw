@@ -30,6 +30,7 @@ private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
 
+    void corruptedFile();
     void loadRaw();
     void loadRawWithReader();
 };
@@ -40,6 +41,13 @@ void QtRawTest::initTestCase()
 
 void QtRawTest::cleanupTestCase()
 {
+}
+
+void QtRawTest::corruptedFile()
+{
+    QImageReader reader(DATA_DIR "/corrupted.arw");
+    QImage raw = reader.read();
+    QCOMPARE(reader.error(), QImageReader::InvalidDataError);
 }
 
 void QtRawTest::loadRaw()
