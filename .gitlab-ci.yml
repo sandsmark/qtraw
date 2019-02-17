@@ -1,0 +1,77 @@
+image: mardy/qt:trusty-qt512
+
+cache:
+  key: apt-cache
+  paths:
+  - apt-cache/
+    # for build_dependencies
+  - libraw
+
+stages:
+  - deps
+  - build
+  - test
+
+before_script:
+  - export APT_CACHE_DIR=`pwd`/apt-cache && mkdir -pv $APT_CACHE_DIR
+  - apt-get update -yq
+  - |
+      apt-get -o dir::cache::archives="$APT_CACHE_DIR" install -y \
+          pkg-config libglu1-mesa-dev \
+          gcovr lcov \
+          wget
+
+build_dependencies:
+  stage: deps
+  artifacts:
+    paths:
+      - staging
+  script:
+    - STAGING="$PWD/staging"
+    - LIBRAW_DIR="$PWD/libraw"
+
+      # Build LibRaw
+    - LIBRAW_VERSION="0.19.2"
+    - LIBRAW_ARCHIVE="LibRaw-${LIBRAW_VERSION}.tar.gz"
+    - mkdir -p "$LIBRAW_DIR" && cd "$LIBRAW_DIR"
+    - if [ ! -d "LibRaw-${LIBRAW_VERSION}" ]; then
+    -     if [ ! -f "$LIBRAW_ARCHIVE" ]; then
+    -         wget -c -nv "https://www.libraw.org/data/$LIBRAW_ARCHIVE"
+    -         tar xzf "$LIBRAW_ARCHIVE"
+    -     fi
+    - fi
+    - cd "LibRaw-${LIBRAW_VERSION}"
+    - ./configure --prefix=$STAGING
+    - make -j4 && make install
+
+build_desktop:
+  stage: build
+  script:
+    - STAGING="$PWD/staging"
+    - export BUILD_DIR=build
+    - export PKG_CONFIG_PATH="$STAGING/lib/pkgconfig:$PKG_CONFIG_PATH"
+    - mkdir build
+    - cd build
+    - qmake CONFIG+=debug CONFIG+=coverage ..
+    - make -j4
+  dependencies:
+    - build_dependencies
+  artifacts:
+    paths:
+      - build/
+
+test_desktop:
+  stage: test
+  script:
+    - STAGING="$PWD/staging"
+    - export BUILD_DIR=build
+    - find build | xargs touch # Avoid rebuilding
+    - cd build
+    - export QT_QPA_PLATFORM="offscreen"
+    - LD_LIBRARY_PATH="$STAGING/lib:$LD_LIBRARY_PATH" make coverage-html
+  dependencies:
+    - build_dependencies
+    - build_desktop
+  artifacts:
+    paths:
+      - build/coverage-html/

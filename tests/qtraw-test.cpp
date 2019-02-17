@@ -33,14 +33,14 @@ void QtRawTest::cleanupTestCase()
 
 void QtRawTest::loadRaw()
 {
-    QImage raw("testimage.arw");
-    QCOMPARE(raw.size(), QSize(4288, 2856));
+    QImage raw(DATA_DIR "/testimage.arw");
+    QCOMPARE(raw.size(), QSize(4256, 2856));
 }
 
 void QtRawTest::loadRawWithReader()
 {
-    QImageReader reader("testimage.arw");
-    QCOMPARE(reader.size(), QSize(4288, 2856));
+    QImageReader reader(DATA_DIR "/testimage.arw");
+    QCOMPARE(reader.size(), QSize(4256, 2856));
 
     reader.setScaledSize(QSize(800,600));
     QImage raw = reader.read();

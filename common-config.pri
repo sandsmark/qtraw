@@ -43,3 +43,5 @@ isEmpty(KDEDIR) {
     message("====")
     message("==== KDE install path set to `$${INSTALL_KDEDIR}'")
 }
+
+include(coverage.pri)
