@@ -1,3 +1,6 @@
+[![pipeline status](https://gitlab.com/mardy/qtraw/badges/master/pipeline.svg)](https://gitlab.com/mardy/qtraw/commits/master)
+[![coverage report](https://gitlab.com/mardy/qtraw/badges/master/coverage.svg)](https://gitlab.com/mardy/qtraw/commits/master)
+
 QtRaw
 =====
 
