@@ -8,9 +8,6 @@ QT += \
 SOURCES += \
     qtraw-test.cpp
 
-HEADERS += \
-    qtraw-test.h
-
 DATA_DIR = $${TOP_SRC_DIR}/tests
 DEFINES += \
     DATA_DIR=\\\"$${DATA_DIR}\\\"

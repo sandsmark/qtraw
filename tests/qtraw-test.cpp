@@ -17,11 +17,22 @@
  * along with QtRaw.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "qtraw-test.h"
-
 #include <QDebug>
 #include <QImage>
 #include <QImageReader>
+#include <QTest>
+
+class QtRawTest: public QObject
+{
+    Q_OBJECT
+
+private Q_SLOTS:
+    void initTestCase();
+    void cleanupTestCase();
+
+    void loadRaw();
+    void loadRawWithReader();
+};
 
 void QtRawTest::initTestCase()
 {
@@ -48,3 +59,5 @@ void QtRawTest::loadRawWithReader()
 }
 
 QTEST_MAIN(QtRawTest)
+
+#include "qtraw-test.moc"
