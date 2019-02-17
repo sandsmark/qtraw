@@ -32,6 +32,7 @@ private Q_SLOTS:
 
     void corruptedFile();
     void canRead();
+    void loadRaw_data();
     void loadRaw();
     void loadRawWithReader();
 };
@@ -57,10 +58,27 @@ void QtRawTest::canRead()
     QVERIFY(reader.canRead());
 }
 
+void QtRawTest::loadRaw_data()
+{
+    QTest::addColumn<QString>("fileName");
+    QTest::addColumn<QSize>("expectedSize");
+
+    QTest::newRow("sony") <<
+        DATA_DIR "/testimage.arw" <<
+        QSize(4256, 2856);
+
+    QTest::newRow("nikon") <<
+        DATA_DIR "/RAW_NIKON_D70.NEF" <<
+        QSize(2014, 3039);
+}
+
 void QtRawTest::loadRaw()
 {
-    QImage raw(DATA_DIR "/testimage.arw");
-    QCOMPARE(raw.size(), QSize(4256, 2856));
+    QFETCH(QString, fileName);
+    QFETCH(QSize, expectedSize);
+
+    QImage raw(fileName);
+    QCOMPARE(raw.size(), expectedSize);
 }
 
 void QtRawTest::loadRawWithReader()
