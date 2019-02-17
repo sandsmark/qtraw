@@ -8,7 +8,7 @@ QT += \
 SOURCES += \
     qtraw-test.cpp
 
-DATA_DIR = $${TOP_SRC_DIR}/tests
+DATA_DIR = $${TOP_SRC_DIR}/tests/data
 DEFINES += \
     DATA_DIR=\\\"$${DATA_DIR}\\\"
 
