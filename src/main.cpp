@@ -46,7 +46,8 @@ QStringList RawPlugin::keys() const
         QLatin1String("arw") <<
         QLatin1String("nef") <<
         QLatin1String("raf") <<
-        QLatin1String("dng");
+        QLatin1String("dng") <<
+        QLatin1String("rw2");
 }
 
 QImageIOPlugin::Capabilities
