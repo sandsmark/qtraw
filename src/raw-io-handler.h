@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Alberto Mardegan <info@mardy.it>
+ * Copyright (C) 2012-2020 Alberto Mardegan <info@mardy.it>
  *
  * This file is part of QtRaw.
  *
