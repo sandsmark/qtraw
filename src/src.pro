@@ -7,8 +7,12 @@ CONFIG += \
     plugin
 DESTDIR = imageformats
 
-PKGCONFIG += \
-    libraw
+!defined(LIBRAW_LIBS, var) {
+    PKGCONFIG += libraw
+} else {
+    LIBS += $${LIBRAW_LIBS} -lraw
+    INCLUDEPATH += $${LIBRAW_INCLUDEPATH}
+}
 
 HEADERS += \
     datastream.h \
