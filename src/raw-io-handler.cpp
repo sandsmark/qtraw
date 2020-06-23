@@ -59,12 +59,15 @@ bool RawIOHandlerPrivate::load(QIODevice *device)
     if (device == 0) return false;
     if (device->isSequential()) return false;
 
+    qint64 pos = device->pos();
+
     device->seek(0);
     if (raw != 0) return true;
 
     stream = new Datastream(device);
     raw = new LibRaw;
     if (raw->open_datastream(stream) != LIBRAW_SUCCESS) {
+        device->seek(pos);
         delete raw;
         raw = 0;
         delete stream;
