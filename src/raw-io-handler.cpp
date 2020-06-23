@@ -57,6 +57,7 @@ RawIOHandlerPrivate::~RawIOHandlerPrivate()
 bool RawIOHandlerPrivate::load(QIODevice *device)
 {
     if (device == 0) return false;
+    if (device->isSequential()) return false;
 
     device->seek(0);
     if (raw != 0) return true;
