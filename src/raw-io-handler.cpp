@@ -26,6 +26,8 @@
 
 #include <libraw.h>
 
+Q_LOGGING_CATEGORY(QTRAW_IO, "qtraw.io", QtWarningMsg)
+
 class RawIOHandlerPrivate
 {
 public:
@@ -56,13 +58,13 @@ RawIOHandlerPrivate::~RawIOHandlerPrivate()
 
 bool RawIOHandlerPrivate::load(QIODevice *device)
 {
-    if (device == 0) return false;
+    if (device == nullptr) return false;
     if (device->isSequential()) return false;
 
     qint64 pos = device->pos();
 
     device->seek(0);
-    if (raw != 0) return true;
+    if (raw != nullptr) return true;
 
     stream = new Datastream(device);
     raw = new LibRaw;
@@ -127,11 +129,11 @@ bool RawIOHandler::read(QImage *image)
     libraw_processed_image_t *output;
     if (finalSize.width() < imgdata.thumbnail.twidth ||
         finalSize.height() < imgdata.thumbnail.theight) {
-        qDebug() << "Using thumbnail";
+        qCDebug(QTRAW_IO) << "Using thumbnail";
         d->raw->unpack_thumb();
         output = d->raw->dcraw_make_mem_thumb();
     } else {
-        qDebug() << "Decoding raw data";
+        qCDebug(QTRAW_IO) << "Decoding raw data";
         d->raw->unpack();
         d->raw->dcraw_process();
         output = d->raw->dcraw_make_mem_image();

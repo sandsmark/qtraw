@@ -45,4 +45,6 @@ private:
     RawIOHandlerPrivate *d;
 };
 
+Q_DECLARE_LOGGING_CATEGORY(QTRAW_IO);
+
 #endif // RAW_IO_HANDLER_H
