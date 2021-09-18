@@ -29,5 +29,5 @@ INSTALLS += target
 
 # For KDE, install a .desktop file with metadata about the loader
 kde_desktop.files = raw.desktop
-kde_desktop.path = $${INSTALL_KDEDIR}/share/kde4/services/qimageioplugins/
+kde_desktop.path = $${INSTALL_KDEDIR}/share/kservices5/qimageioplugins/
 INSTALLS += kde_desktop
