@@ -32,28 +32,39 @@ class RawPlugin: public QImageIOPlugin
 #endif
 
 public:
-    QStringList keys() const;
     Capabilities capabilities(QIODevice *device,
-                              const QByteArray &format) const;
+                              const QByteArray &format) const override;
     QImageIOHandler *create(QIODevice *device,
-                            const QByteArray &format = QByteArray()) const;
+                            const QByteArray &format = QByteArray()) const override;
 };
-
-QStringList RawPlugin::keys() const
-{
-    return QStringList() <<
-        QLatin1String("crw") << QLatin1String("cr2") <<
-        QLatin1String("arw") <<
-        QLatin1String("nef") <<
-        QLatin1String("raf") <<
-        QLatin1String("dng") <<
-        QLatin1String("rw2");
-}
 
 QImageIOPlugin::Capabilities
 RawPlugin::capabilities(QIODevice *device, const QByteArray &format) const
 {
-    if (keys().contains(format) ||
+    static const QSet<QString> keys = {
+        "arw",
+        "crw", "cr2",
+        "dng",
+        "nef",
+        "raf",
+        "kderaw",
+        "dcr",
+        "k25",
+        "kdc",
+        "mrw",
+        "nrw",
+        "orf",
+        "raw",
+        "raw2",
+        "rw",
+        "rw2",
+        "pef",
+        "srw",
+        "x3f",
+        "sr2",
+        "srf"
+    };
+    if (keys.contains(format) ||
         format == "tif" ||
         format == "tiff") {
         return Capabilities(CanRead);
@@ -63,7 +74,7 @@ RawPlugin::capabilities(QIODevice *device, const QByteArray &format) const
     }
 
     Capabilities cap;
-    if (device->isReadable() && RawIOHandler::canRead(device)) {
+    if (device && device->isReadable() && RawIOHandler::canRead(device)) {
         cap |= CanRead;
     }
     return cap;
@@ -77,9 +88,5 @@ QImageIOHandler *RawPlugin::create(QIODevice *device,
     handler->setFormat(format);
     return handler;
 }
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-Q_EXPORT_PLUGIN2(qtraw, RawPlugin)
-#endif
 
 #include "main.moc"
