@@ -66,10 +66,10 @@ bool RawIOHandlerPrivate::load(QIODevice *device)
     if (device == nullptr) return false;
     if (device->isSequential()) return false;
 
-    qint64 pos = device->pos();
-
-    device->seek(0);
     if (raw != nullptr) return true;
+
+    qint64 pos = device->pos();
+    device->seek(0);
 
     stream = new Datastream(device);
     raw = new LibRaw;
@@ -125,9 +125,11 @@ bool RawIOHandler::canRead(QIODevice *device)
 
 bool RawIOHandler::read(QImage *image)
 {
-    if (!d->load(device())) return false;
+    if (!d->load(device())) {
+        return false;
+    }
 
-    QSize finalSize = d->scaledSize.isValid() ?
+    const QSize finalSize = d->scaledSize.isValid() ?
         d->scaledSize : d->defaultSize;
 
     const libraw_data_t &imgdata = d->raw->imgdata;
@@ -147,6 +149,7 @@ bool RawIOHandler::read(QImage *image)
     QImage unscaled;
     uchar *pixels = 0;
     if (output->type == LIBRAW_IMAGE_JPEG) {
+        // TODO: use QImageReader so we can set quality, qjpeg reads faster with lower quality
         unscaled.loadFromData(output->data, output->data_size, "JPEG");
         if (imgdata.sizes.flip != 0) {
             QTransform rotation;
