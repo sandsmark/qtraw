@@ -55,14 +55,17 @@ RawPlugin::capabilities(QIODevice *device, const QByteArray &format) const
 {
     if (keys().contains(format) ||
         format == "tif" ||
-        format == "tiff")
+        format == "tiff") {
         return Capabilities(CanRead);
-    if (!format.isEmpty())
-        return 0;
+    }
+    if (!format.isEmpty()) {
+        return Capabilities();
+    }
 
     Capabilities cap;
-    if (device->isReadable() && RawIOHandler::canRead(device))
+    if (device->isReadable() && RawIOHandler::canRead(device)) {
         cap |= CanRead;
+    }
     return cap;
 }
 
