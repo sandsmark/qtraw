@@ -26,6 +26,9 @@
 
 #include <libraw.h>
 
+// Same as the jpeg plugin
+#define HIGH_QUALITY_THRESHOLD 50
+
 Q_LOGGING_CATEGORY(QTRAW_IO, "qtraw.io", QtWarningMsg)
 
 class RawIOHandlerPrivate
@@ -46,6 +49,8 @@ public:
     QSize            defaultSize;
     QSize            scaledSize;
     mutable RawIOHandler *q;
+
+    int quality = 75;
 };
 
 RawIOHandlerPrivate::~RawIOHandlerPrivate()
@@ -177,9 +182,8 @@ bool RawIOHandler::read(QImage *image)
     }
 
     if (unscaled.size() != finalSize) {
-        // TODO: use quality parameter to decide transformation method
         *image = unscaled.scaled(finalSize, Qt::IgnoreAspectRatio,
-                                 Qt::SmoothTransformation);
+                d->quality >= HIGH_QUALITY_THRESHOLD ? Qt::SmoothTransformation : Qt::FastTransformation);
     } else {
         *image = unscaled;
         if (output->type == LIBRAW_IMAGE_BITMAP) {
@@ -205,6 +209,8 @@ QVariant RawIOHandler::option(ImageOption option) const
         return d->defaultSize;
     case ScaledSize:
         return d->scaledSize;
+    case Quality:
+        return d->quality;
     default:
         break;
     }
@@ -217,6 +223,9 @@ void RawIOHandler::setOption(ImageOption option, const QVariant & value)
     switch(option) {
     case ScaledSize:
         d->scaledSize = value.toSize();
+        break;
+    case Quality:
+        d->quality = value.toInt();
         break;
     default:
         break;
@@ -231,6 +240,7 @@ bool RawIOHandler::supportsOption(ImageOption option) const
     case ImageFormat:
     case Size:
     case ScaledSize:
+    case Quality:
         return true;
     default:
         break;

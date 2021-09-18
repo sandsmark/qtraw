@@ -21,6 +21,7 @@
 #define RAW_IO_HANDLER_H
 
 #include <QImageIOHandler>
+#include <QLoggingCategory>
 
 class QImage;
 class QByteArray;
