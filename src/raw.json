@@ -6,5 +6,29 @@
         "raf",
         "dng",
         "rw2"
+    ],
+    "MimeTypes": [
+        "image/x-adobe-dng",
+        "image/x-canon-cr2",
+        "image/x-canon-crw",
+        "image/x-fuji-raf",
+        "image/x-kde-raw",
+        "image/x-kodak-dcr",
+        "image/x-kodak-k25",
+        "image/x-kodak-kdc",
+        "image/x-minolta-mrw",
+        "image/x-nikon-nef",
+        "image/x-nikon-nrw",
+        "image/x-olympus-orf",
+        "image/x-panasonic-raw",
+        "image/x-panasonic-raw2",
+        "image/x-panasonic-rw",
+        "image/x-panasonic-rw2",
+        "image/x-pentax-pef",
+        "image/x-samsung-srw",
+        "image/x-sigma-x3f",
+        "image/x-sony-arw",
+        "image/x-sony-sr2",
+        "image/x-sony-srf"
     ]
 }
