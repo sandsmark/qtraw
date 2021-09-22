@@ -58,6 +58,15 @@ public:
     int quality = DEFAULT_QUALITY;
 };
 
+static void printError(int error)
+{
+    if (error < 0) {
+        qCWarning(QTRAW_IO) << libraw_strerror(error);
+    } else if (error > 0) {
+        qCWarning(QTRAW_IO) << strerror(error);
+    }
+}
+
 RawIOHandlerPrivate::~RawIOHandlerPrivate()
 {
     delete raw;
@@ -76,9 +85,22 @@ bool RawIOHandlerPrivate::load(QIODevice *device)
     qint64 pos = device->pos();
     device->seek(0);
 
+
     stream = new Datastream(device);
     raw = new LibRaw;
-    if (raw->open_datastream(stream) != LIBRAW_SUCCESS) {
+
+    // Tiny optimization, but w/e
+    //int ret = 0;
+    //QFileDevice *file = qobject_cast<QFileDevice*>(device);
+    //if (file) {
+    //    ret = raw->open_file(file->fileName().toLocal8Bit().constData());
+    //} else {
+    //    ret = raw->open_datastream(stream);
+    //}
+
+    int ret = raw->open_datastream(stream);
+    if (ret != LIBRAW_SUCCESS) {
+        printError(ret);
         device->seek(pos);
         delete raw;
         raw = 0;
@@ -141,12 +163,19 @@ bool RawIOHandler::read(QImage *image)
     if (finalSize.width() < imgdata.thumbnail.twidth ||
         finalSize.height() < imgdata.thumbnail.theight) {
         qCDebug(QTRAW_IO) << "Using thumbnail";
-        d->raw->unpack_thumb();
+        int ret = d->raw->unpack_thumb();
+        if (ret != LIBRAW_SUCCESS) {
+            printError(ret);
+            return false;
+        }
         output = d->raw->dcraw_make_mem_thumb();
     } else {
-        qCDebug(QTRAW_IO) << "Decoding raw data";
-        d->raw->unpack();
+        int ret = d->raw->unpack();
         d->raw->dcraw_process();
+        if (ret != LIBRAW_SUCCESS) {
+            printError(ret);
+            return false;
+        }
         output = d->raw->dcraw_make_mem_image();
     }
 
