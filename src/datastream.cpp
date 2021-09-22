@@ -21,6 +21,11 @@
 
 #include <QIODevice>
 #include <QTextStream>
+#include <QDebug>
+#include <QLoggingCategory>
+
+Q_DECLARE_LOGGING_CATEGORY(QTRAW_DS);
+Q_LOGGING_CATEGORY(QTRAW_DS, "qtraw.ds", QtWarningMsg)
 
 Datastream::Datastream(QIODevice *device):
     m_device(device)
@@ -33,12 +38,20 @@ Datastream::~Datastream()
 
 int Datastream::valid()
 {
+    if (!m_device->isReadable()) {
+        qCDebug(QTRAW_DS) << "Source device not readable" << m_device->errorString();
+    }
     return m_device->isReadable();
 }
 
 int Datastream::read(void *ptr, size_t size, size_t nmemb)
 {
-    return int(m_device->read((char *)ptr, size * nmemb) / size);
+    qint64 amount = m_device->read((char *)ptr, size * nmemb);
+    if (amount < 0) {
+        qCDebug(QTRAW_DS) << "Reading failed" << m_device->errorString();
+    }
+
+    return amount / size;
 }
 
 int Datastream::seek(INT64 offset, int whence)
@@ -59,7 +72,12 @@ int Datastream::seek(INT64 offset, int whence)
     }
 
     if (pos < 0) pos = 0;
-    return m_device->seek(pos) ? 0 : -1;
+
+    bool ret = m_device->seek(pos);
+    if (!ret) {
+        qCDebug(QTRAW_DS) << "Seeking failed" << m_device->errorString();
+    }
+    return ret ? 0 : -1;
 }
 
 INT64 Datastream::tell()
@@ -75,12 +93,21 @@ INT64 Datastream::size()
 int Datastream::get_char()
 {
     char c;
-    return m_device->getChar(&c) ? (unsigned char)c : -1;
+    if (!m_device->getChar(&c)) {
+        qCDebug(QTRAW_DS) << "Reading character failed" << m_device->errorString();
+        return -1;
+    }
+    return (unsigned char)c;
 }
 
 char *Datastream::gets(char *s, int n)
 {
-    return m_device->readLine(s, n) >= 0 ? s : NULL;
+    int ret = m_device->readLine(s, n);
+    if (ret < 0) {
+        qCDebug(QTRAW_DS) << "Reading string failed" << m_device->errorString();
+        return nullptr;
+    }
+    return s;
 }
 
 int Datastream::scanf_one(const char *fmt, void *val)
@@ -97,6 +124,9 @@ int Datastream::scanf_one(const char *fmt, void *val)
         *(static_cast<float*>(val)) = f;
     } else {
         return 0;
+    }
+    if (stream.status() != QTextStream::Ok) {
+        qCDebug(QTRAW_DS) << "scanf fail" << m_device->errorString();
     }
     return (stream.status() == QTextStream::Ok) ? 1 : EOF;
 }

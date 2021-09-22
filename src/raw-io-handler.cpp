@@ -58,12 +58,20 @@ public:
     int quality = DEFAULT_QUALITY;
 };
 
-static void printError(int error)
+static void printError(const char *what, int error, bool warning = true)
 {
-    if (error < 0) {
-        qCWarning(QTRAW_IO) << libraw_strerror(error);
-    } else if (error > 0) {
-        qCWarning(QTRAW_IO) << strerror(error);
+    if (warning) {
+        if (error < 0) {
+            qCWarning(QTRAW_IO) << what << libraw_strerror(error);
+        } else if (error > 0) {
+            qCWarning(QTRAW_IO) << what << strerror(error);
+        }
+    } else {
+        if (error < 0) {
+            qCDebug(QTRAW_IO) << what << libraw_strerror(error);
+        } else if (error > 0) {
+            qCDebug(QTRAW_IO) << what << strerror(error);
+        }
     }
 }
 
@@ -77,8 +85,12 @@ RawIOHandlerPrivate::~RawIOHandlerPrivate()
 
 bool RawIOHandlerPrivate::load(QIODevice *device)
 {
+    qCDebug(QTRAW_IO) << "Asked if we can open a file";
     if (device == nullptr) return false;
-    if (device->isSequential()) return false;
+    if (device->isSequential()) {
+        qCDebug(QTRAW_IO) << "Can't read sequential";
+        return false;
+    }
 
     if (raw != nullptr) return true;
 
@@ -100,7 +112,7 @@ bool RawIOHandlerPrivate::load(QIODevice *device)
 
     int ret = raw->open_datastream(stream);
     if (ret != LIBRAW_SUCCESS) {
-        printError(ret);
+        printError("Opening file failed", ret, false);
         device->seek(pos);
         delete raw;
         raw = 0;
@@ -114,6 +126,7 @@ bool RawIOHandlerPrivate::load(QIODevice *device)
     if (raw->imgdata.sizes.flip == 5 || raw->imgdata.sizes.flip == 6) {
         defaultSize.transpose();
     }
+    qCDebug(QTRAW_IO) << "We can open" << device;
     return true;
 }
 
@@ -155,21 +168,28 @@ bool RawIOHandler::read(QImage *image)
         return false;
     }
 
-    QSize finalSize = d->scaledSize.isValid() ?
+    const QSize finalSize = d->scaledSize.isValid() ?
         d->scaledSize : d->defaultSize;
 
+
     const libraw_data_t &imgdata = d->raw->imgdata;
+    QSize thumbnailSize(imgdata.thumbnail.twidth, imgdata.thumbnail.theight);
+    if (d->raw->imgdata.sizes.flip == 5 || d->raw->imgdata.sizes.flip == 6) {
+        thumbnailSize.transpose();
+    }
+    qCDebug(QTRAW_IO) << "Preview size:" << thumbnailSize;
+    qCDebug(QTRAW_IO) << "Full size:" << finalSize;
 
     const bool useThumbnail =
         (// Less than 1% difference
          d->quality <= DEFAULT_QUALITY &&
-         finalSize.width() / 100 == imgdata.thumbnail.twidth / 100 &&
-         finalSize.height() / 100 == imgdata.thumbnail.theight / 100
+         finalSize.width() / 100 == thumbnailSize.width() / 100 &&
+         finalSize.height() / 100 == thumbnailSize.height() / 100
         )
         ||
         (
-            finalSize.width() <= imgdata.thumbnail.twidth &&
-            finalSize.height() <= imgdata.thumbnail.theight
+            finalSize.width() <= thumbnailSize.width() &&
+            finalSize.height() <= thumbnailSize.height()
         );
 
 
@@ -178,15 +198,16 @@ bool RawIOHandler::read(QImage *image)
         qCDebug(QTRAW_IO) << "Using thumbnail";
         int ret = d->raw->unpack_thumb();
         if (ret != LIBRAW_SUCCESS) {
-            printError(ret);
+            printError("Unpacking preview failed", ret);
             return false;
         }
         output = d->raw->dcraw_make_mem_thumb();
     } else {
+        qCDebug(QTRAW_IO) << "Using full image";
         int ret = d->raw->unpack();
         d->raw->dcraw_process();
         if (ret != LIBRAW_SUCCESS) {
-            printError(ret);
+            printError("Processing full image failed", ret);
             return false;
         }
         output = d->raw->dcraw_make_mem_image();
