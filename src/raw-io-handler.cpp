@@ -155,13 +155,26 @@ bool RawIOHandler::read(QImage *image)
         return false;
     }
 
-    const QSize finalSize = d->scaledSize.isValid() ?
+    QSize finalSize = d->scaledSize.isValid() ?
         d->scaledSize : d->defaultSize;
 
     const libraw_data_t &imgdata = d->raw->imgdata;
-    libraw_processed_image_t *output;
-    if (finalSize.width() < imgdata.thumbnail.twidth ||
-        finalSize.height() < imgdata.thumbnail.theight) {
+
+    const bool useThumbnail =
+        (// Less than 1% difference
+         d->quality <= DEFAULT_QUALITY &&
+         finalSize.width() / 100 == imgdata.thumbnail.twidth / 100 &&
+         finalSize.height() / 100 == imgdata.thumbnail.theight / 100
+        )
+        ||
+        (
+            finalSize.width() <= imgdata.thumbnail.twidth &&
+            finalSize.height() <= imgdata.thumbnail.theight
+        );
+
+
+    libraw_processed_image_t *output = nullptr;
+    if (useThumbnail) {
         qCDebug(QTRAW_IO) << "Using thumbnail";
         int ret = d->raw->unpack_thumb();
         if (ret != LIBRAW_SUCCESS) {
@@ -231,8 +244,13 @@ bool RawIOHandler::read(QImage *image)
     }
 
     if (unscaled.size() != finalSize) {
-        *image = unscaled.scaled(finalSize, Qt::IgnoreAspectRatio,
-                d->quality >= HIGH_QUALITY_THRESHOLD ? Qt::SmoothTransformation : Qt::FastTransformation);
+        Qt::TransformationMode mode = Qt::FastTransformation;
+
+        // If we've loaded a thumbnail, do a smooth transformation
+        if (d->quality >= HIGH_QUALITY_THRESHOLD || useThumbnail) {
+            mode = Qt::SmoothTransformation;
+        }
+        *image = unscaled.scaled(finalSize, Qt::IgnoreAspectRatio, mode);
     } else {
         if (output->type == LIBRAW_IMAGE_BITMAP) {
             // make sure that the bits are copied
