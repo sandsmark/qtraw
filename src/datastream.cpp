@@ -38,7 +38,7 @@ int Datastream::valid()
 
 int Datastream::read(void *ptr, size_t size, size_t nmemb)
 {
-    return int(m_device->read((char *)ptr, size * nmemb));
+    return int(m_device->read((char *)ptr, size * nmemb) / size);
 }
 
 int Datastream::seek(INT64 offset, int whence)
