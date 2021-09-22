@@ -234,11 +234,11 @@ bool RawIOHandler::read(QImage *image)
         *image = unscaled.scaled(finalSize, Qt::IgnoreAspectRatio,
                 d->quality >= HIGH_QUALITY_THRESHOLD ? Qt::SmoothTransformation : Qt::FastTransformation);
     } else {
-        *image = unscaled;
         if (output->type == LIBRAW_IMAGE_BITMAP) {
             // make sure that the bits are copied
-            uchar *b = image->bits();
-            Q_UNUSED(b);
+            *image = unscaled.copy();
+        } else {
+            *image = unscaled;
         }
     }
     d->raw->dcraw_clear_mem(output);
