@@ -21,13 +21,18 @@
 #include "raw-io-handler.h"
 
 #include <QDebug>
+#include <QBuffer>
 #include <QImage>
 #include <QVariant>
+#include <QImageReader>
+#include <QElapsedTimer>
+#include <QFileDevice>
 
 #include <libraw.h>
 
 // Same as the jpeg plugin
 #define HIGH_QUALITY_THRESHOLD 50
+#define DEFAULT_QUALITY 75
 
 Q_LOGGING_CATEGORY(QTRAW_IO, "qtraw.io", QtWarningMsg)
 
@@ -50,7 +55,7 @@ public:
     QSize            scaledSize;
     mutable RawIOHandler *q;
 
-    int quality = 75;
+    int quality = DEFAULT_QUALITY;
 };
 
 RawIOHandlerPrivate::~RawIOHandlerPrivate()
@@ -122,7 +127,6 @@ bool RawIOHandler::canRead(QIODevice *device)
     return handler.d->load(device);
 }
 
-
 bool RawIOHandler::read(QImage *image)
 {
     if (!d->load(device())) {
@@ -147,10 +151,23 @@ bool RawIOHandler::read(QImage *image)
     }
 
     QImage unscaled;
-    uchar *pixels = 0;
+    uchar *pixels = nullptr;
     if (output->type == LIBRAW_IMAGE_JPEG) {
-        // TODO: use QImageReader so we can set quality, qjpeg reads faster with lower quality
-        unscaled.loadFromData(output->data, output->data_size, "JPEG");
+        // fromRawData does not copy data
+        QByteArray bufferData =
+            QByteArray::fromRawData(reinterpret_cast<char*>(output->data), output->data_size);
+
+        QBuffer buffer(&bufferData);
+        // We use QImageReader so we can set quality, qjpeg reads faster when lower quality is set
+        QImageReader jpegReader(&buffer);
+        jpegReader.setAutoDetectImageFormat(false);
+        jpegReader.setFormat("JPG");
+        jpegReader.setQuality(d->quality);
+        jpegReader.setScaledSize(finalSize);
+        if (!jpegReader.read(&unscaled)) {
+            return false;
+        }
+
         if (imgdata.sizes.flip != 0) {
             QTransform rotation;
             int angle = 0;
@@ -229,6 +246,9 @@ void RawIOHandler::setOption(ImageOption option, const QVariant & value)
         break;
     case Quality:
         d->quality = value.toInt();
+        if (d->quality == -1) {
+            d->quality = DEFAULT_QUALITY;
+        }
         break;
     default:
         break;
